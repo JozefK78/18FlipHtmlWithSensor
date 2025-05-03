@@ -1166,7 +1166,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 			// Need to experiment for correct mapping!
 
 			// Common mapping: Tilting phone right increases event.x -> positive sim gravity X
-			scene.gravityX = event.accelerationIncludingGravity.x;
+			scene.gravityX = -event.accelerationIncludingGravity.x;
 
 			// Common mapping: Tilting phone top down increases event.y -> negative sim gravity Y
 			scene.gravityY = -event.accelerationIncludingGravity.y;
