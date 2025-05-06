@@ -94,6 +94,30 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 			else
 				return x;
 		}
+function isCellStaticWall(ix, iy, fluidObj, sceneObj) {
+    // Check bounds first: cells outside the defined fNumX/fNumY grid are effectively solid walls
+    if (ix < 0 || ix >= fluidObj.fNumX || iy < 0 || iy >= fluidObj.fNumY) return true;
+
+    var cellRealX = (ix + 0.5) * fluidObj.h;
+    var cellRealY = (iy + 0.5) * fluidObj.h;
+    var distSqToMainCenter = (cellRealX - sceneObj.circleCenterX) * (cellRealX - sceneObj.circleCenterX) +
+                             (cellRealY - sceneObj.circleCenterY) * (cellRealY - sceneObj.circleCenterY);
+    // A cell is part of the static wall if its center is outside the main circle radius
+    return distSqToMainCenter > (sceneObj.circleRadius * sceneObj.circleRadius);
+}
+
+function isCellDraggable(ix, iy, fluidObj, sceneObj) {
+    if (!sceneObj.showObstacle) return false; // Draggable obstacle not active
+    // Check bounds: draggable obstacle can only exist within the grid
+    if (ix < 0 || ix >= fluidObj.fNumX || iy < 0 || iy >= fluidObj.fNumY) return false;
+
+    var cellRealX = (ix + 0.5) * fluidObj.h;
+    var cellRealY = (iy + 0.5) * fluidObj.h;
+    var dxDraggable = cellRealX - sceneObj.obstacleX;
+    var dyDraggable = cellRealY - sceneObj.obstacleY;
+    // A cell is part of the draggable obstacle if its center is within the draggable obstacle's radius
+    return (dxDraggable * dxDraggable + dyDraggable * dyDraggable) < (sceneObj.obstacleRadius * sceneObj.obstacleRadius);
+}
 
 		// ----------------- start of simulator ------------------------------
 
