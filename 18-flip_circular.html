@@ -976,18 +976,38 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 
 			         // Dynamically calculate clock character dimensions
 			         let circleDiameterInSimUnits = scene.circleRadius * 2;
-			         let circleDiameterInGridCells = Math.floor(circleDiameterInSimUnits / f.h); // This is also the vertical diameter in cells
+			         let circleDiameterInGridCells = Math.floor(circleDiameterInSimUnits / f.h);
 
-			         // 1. Determine Target Digit Height (e.g., 60% of vertical diameter)
-			         let targetDigitHeight = Math.floor(circleDiameterInGridCells * 0.60);
-			         scene.clockConfig.digitHeight = Math.max(7, targetDigitHeight); // Min height 7 (master pattern height)
+			         // 1. Determine Target Character Height (50% of circle's vertical diameter)
+			         let targetCharHeightInGridCells = Math.floor(circleDiameterInGridCells * 0.50);
+			         scene.clockConfig.digitHeight = Math.max(7, targetCharHeightInGridCells); // Min height 7
 
-			         // 2. Derive Digit Width from Height (maintaining ~5:7 W:H ratio)
-			         scene.clockConfig.digitWidth = Math.max(5, Math.floor(scene.clockConfig.digitHeight * 5 / 7)); // Min width 5 (master pattern width)
+			         // 2. Determine Target Total Width for "HH:MM" (80% of circle's horizontal diameter)
+			         let targetTotalTimeWidthInGridCells = Math.floor(circleDiameterInGridCells * 0.80);
 
-			         // 3. Derive Colon Width and Spacing from new Digit Width
-			         scene.clockConfig.colonWidth = Math.max(3, Math.floor(scene.clockConfig.digitWidth * 3 / 5)); // Min colon width 3
-			         scene.clockConfig.spacing = Math.max(1, Math.floor(scene.clockConfig.digitWidth / 5));    // Min spacing 1, proportional
+			         // 3. Calculate ideal widths based on new height and aspect ratio
+			         let idealDigitWidth = Math.max(5, Math.floor(scene.clockConfig.digitHeight * 5 / 7));
+			         let idealColonWidth = Math.max(3, Math.floor(idealDigitWidth * 3 / 5));
+			         let idealSpacing = Math.max(1, Math.floor(idealDigitWidth / 5));
+
+			         let currentIdealTotalWidth = (4 * idealDigitWidth) + (1 * idealColonWidth) + (4 * idealSpacing);
+			         
+			         let widthScaleFactor = 1.0;
+			         if (currentIdealTotalWidth > 0 && targetTotalTimeWidthInGridCells > 0) {
+			             widthScaleFactor = targetTotalTimeWidthInGridCells / currentIdealTotalWidth;
+			         }
+
+			         scene.clockConfig.digitWidth = Math.max(5, Math.floor(idealDigitWidth * widthScaleFactor));
+			         scene.clockConfig.colonWidth = Math.max(3, Math.floor(idealColonWidth * widthScaleFactor));
+			         scene.clockConfig.spacing = Math.max(1, Math.floor(idealSpacing * widthScaleFactor));
+			         // If, after scaling, the total width is still off due to floorings, adjust spacing slightly as a buffer.
+			         // This is a simplified adjustment. A more complex iterative approach could fine-tune all widths.
+			         let finalCalculatedWidth = (scene.clockConfig.digitWidth * 4) + (scene.clockConfig.colonWidth * 1) + (scene.clockConfig.spacing * 4);
+			         let widthDifference = targetTotalTimeWidthInGridCells - finalCalculatedWidth;
+			         if (Math.abs(widthDifference) > 0 && scene.clockConfig.spacing > 0) { // only adjust if there's spacing to adjust
+			            let spacingAdjustment = Math.floor(widthDifference / 4); // Distribute difference among 4 spaces
+			            scene.clockConfig.spacing = Math.max(1, scene.clockConfig.spacing + spacingAdjustment);
+			         }
 
 
 			         initClockDigitsData(); // Initialize digit patterns AFTER config is set
