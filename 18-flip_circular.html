@@ -62,6 +62,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 	PIC
 	<input type="range" min="0" max="10" value="9" class="slider" onchange="scene.flipRatio = 0.1 * this.value"> FLIP
 	<br>
+	Grid Resolution:
+	<input type="range" min="50" max="200" value="100" step="10" class="slider" id="gridResSlider" onchange="updateGridResolution(this.value)">
+	<br>
 	<canvas id="myCanvas" style="border:2px solid"></canvas>
 
 	<script>
@@ -786,6 +789,7 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 			             offsetY: 0     // Calculated based on grid size
 			         },
 			         lastMinuteDisplayed: -1,
+			currentRes: 100, // Default grid resolution
 			fluid: null
 		};
 
@@ -930,9 +934,9 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 
 			scene.numPressureIters = 50;
 			scene.numParticleIters = 2;
-
-			var res = 100;
-
+	
+			var res = scene.currentRes; // Use adjustable resolution
+	
 			var tankHeight = simHeight; // Use global simHeight
 			var tankWidth = simWidth;   // Use global simWidth
 			var h = tankHeight / res;   // Target grid cell spacing
@@ -1677,8 +1681,40 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 
 		setupScene();
 		      scene.lastMinuteDisplayed = new Date().getMinutes(); // Initialize for first update check
-		update(); // Start the animation loop
+		
+		function updateGridResolution(newResString) {
+		    scene.currentRes = parseInt(newResString);
+		    restartSimulation();
+		}
+		
+		function restartSimulation() {
+		    // Delete and nullify WebGL buffers that depend on grid/particle numbers
+		    if (gridVertBuffer && gl) gl.deleteBuffer(gridVertBuffer);
+		    if (gridColorBuffer && gl) gl.deleteBuffer(gridColorBuffer);
+		    if (pointVertexBuffer && gl) gl.deleteBuffer(pointVertexBuffer);
+		    if (pointColorBuffer && gl) gl.deleteBuffer(pointColorBuffer);
+		
+		    gridVertBuffer = null;
+		    gridColorBuffer = null;
+		    pointVertexBuffer = null;
+		    pointColorBuffer = null;
+		    // diskVertBuffer and diskIdBuffer are static based on numSegs, no need to reset
+		
+		    scene.fluid = null; // Release old fluid object
+		    scene.frameNr = 0;
+		    
+		    // Clear any old particle/grid data that might be cached in draw arrays if setupScene fails early
+		    if (scene.fluid && scene.fluid.particlePos) scene.fluid.particlePos = new Float32Array(0);
+		    if (scene.fluid && scene.fluid.cellColor) scene.fluid.cellColor = new Float32Array(0);
 
+
+		    setupScene(); // This will use scene.currentRes and re-create scene.fluid
+		    // updateTimeDisplayOnGrid(); // setupScene calls this
+		    // draw(); // update loop will handle drawing
+		}
+
+		update(); // Start the animation loop
+	
 	</script>
 </body>
 
