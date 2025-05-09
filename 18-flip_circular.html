@@ -56,7 +56,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 	<button id="permissionButton" class="button" style="display: none;">Enable Motion Controls</button><br>
 
 	<input type="checkbox" checked onclick="scene.showParticles = !scene.showParticles">Particles  
-	<input type="checkbox" onclick="scene.showGrid = !scene.showGrid">Grid  
+	<input type="checkbox" checked onclick="scene.showGrid = !scene.showGrid">Grid
 	<input type="checkbox" checked onclick="scene.compensateDrift = !scene.compensateDrift">Compensate Drift  
 	<input type="checkbox" checked onclick="scene.separateParticles = !scene.separateParticles">Separate Particles  
 	PIC
@@ -84,6 +84,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		var AIR_CELL = 1;
 		var SOLID_CELL = 2;
 		var TIME_CELL = 3; // New cell type for clock digits
+		var VIRTUAL_TIME_CELL = 4; // Cell type for colon: visual wall, but passable
 		
 		var cnt = 0;
 		
@@ -99,9 +100,11 @@ function isCellStaticWall(ix, iy, fluidObj, sceneObj) {
     // Check bounds first: cells outside the defined fNumX/fNumY grid are effectively solid walls
     if (ix < 0 || ix >= fluidObj.fNumX || iy < 0 || iy >= fluidObj.fNumY) return true;
 
-    // Check if it's a time cell
-    var N = fluidObj.fNumY; // Assuming fNumY is accessible as N or fluidObj.fNumY
-    if (fluidObj.cellType[ix * N + iy] === TIME_CELL) return true;
+    // Check if it's a solid time cell (numbers), but not a virtual time cell (colon)
+    var N = fluidObj.fNumY;
+    var cellType = fluidObj.cellType[ix * N + iy];
+    if (cellType === TIME_CELL) return true;
+    // VIRTUAL_TIME_CELL is not a static wall for fluid dynamics
 
     var cellRealX = (ix + 0.5) * fluidObj.h;
     var cellRealY = (iy + 0.5) * fluidObj.h;
@@ -426,11 +429,15 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 					this.v.fill(0.0);
 
 					for (var i = 0; i < this.fNumCells; i++) {
-					                   if (this.cellType[i] == TIME_CELL) { // Preserve TIME_CELL
-					                       this.s[i] = 0.0; // Ensure it's solid for solver
-					                       continue;
+					                   if (this.cellType[i] == TIME_CELL) {
+					                       this.s[i] = 0.0; // TIME_CELL (numbers) are solid
+					                       // cellType remains TIME_CELL, s is 0.0
+					                   } else if (this.cellType[i] == VIRTUAL_TIME_CELL) {
+					                       this.s[i] = 1.0; // VIRTUAL_TIME_CELL (colon) is passable
+					                       // cellType remains VIRTUAL_TIME_CELL, s is 1.0
+					                   } else {
+					                       this.cellType[i] = this.s[i] == 0.0 ? SOLID_CELL : AIR_CELL;
 					                   }
-					                   this.cellType[i] = this.s[i] == 0.0 ? SOLID_CELL : AIR_CELL;
 					               }
 
 					for (var i = 0; i < this.numParticles; i++) {
@@ -439,7 +446,8 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 						var xi = clamp(Math.floor(x * h1), 0, this.fNumX - 1);
 						var yi = clamp(Math.floor(y * h1), 0, this.fNumY - 1);
 						var cellNr = xi * n + yi;
-						if (this.cellType[cellNr] == AIR_CELL) // Only change AIR_CELL to FLUID_CELL
+						// Only change AIR_CELL to FLUID_CELL. TIME_CELL and VIRTUAL_TIME_CELL should retain their type.
+						if (this.cellType[cellNr] == AIR_CELL)
 							this.cellType[cellNr] = FLUID_CELL;
 					}
 				}
@@ -520,10 +528,12 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 
 						for (var i = 0; i < this.fNumX; i++) {
 							for (var j = 0; j < this.fNumY; j++) {
-								var solid = this.cellType[i * n + j] == SOLID_CELL;
-								if (solid || (i > 0 && this.cellType[(i - 1) * n + j] == SOLID_CELL))
+								var cellType = this.cellType[i * n + j];
+								var solid = (cellType == SOLID_CELL || cellType == TIME_CELL); // TIME_CELLs are solid
+								// VIRTUAL_TIME_CELLs are not treated as solid for velocity restoration
+								if (solid || (i > 0 && (this.cellType[(i - 1) * n + j] == SOLID_CELL || this.cellType[(i - 1) * n + j] == TIME_CELL)))
 									this.u[i * n + j] = this.prevU[i * n + j];
-								if (solid || (j > 0 && this.cellType[i * n + j - 1] == SOLID_CELL))
+								if (solid || (j > 0 && (this.cellType[i * n + j - 1] == SOLID_CELL || this.cellType[i * n + j - 1] == TIME_CELL)))
 									this.v[i * n + j] = this.prevV[i * n + j];
 							}
 						}
@@ -703,8 +713,8 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 						this.cellColor[3 * i + 1] = 0.5;
 						this.cellColor[3 * i + 2] = 0.5;
 					}
-						              else if (this.cellType[i] == TIME_CELL) {
-						                  this.cellColor[3 * i] = 0.9; // Light gray for time cells
+						              else if (this.cellType[i] == TIME_CELL || this.cellType[i] == VIRTUAL_TIME_CELL) {
+						                  this.cellColor[3 * i] = 0.9; // Light gray for time and virtual time cells
 						                  this.cellColor[3 * i + 1] = 0.9;
 						                  this.cellColor[3 * i + 2] = 0.9;
 						              }
@@ -764,7 +774,7 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 			obstacleVelX: 0.0,
 			obstacleVelY: 0.0,
 			showParticles: true,
-			showGrid: false,
+			showGrid: true,
 			         clockDigitsData: {},
 			         timeCellCoords: [], // Stores [i,j] of current time cells
 			         clockConfig: {
@@ -895,8 +905,13 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 
 			                             if (distSqToMainCenter <= (scene.circleRadius - f.h) * (scene.circleRadius - f.h)) { // Ensure slightly inside
 			                                 var idx = ix * n + iy;
-			                                 f.cellType[idx] = TIME_CELL;
-			                                 f.s[idx] = 0.0; // Solid
+			                                 if (char === ':') {
+			                                     f.cellType[idx] = VIRTUAL_TIME_CELL;
+			                                     f.s[idx] = 1.0; // Colon is passable
+			                                 } else {
+			                                     f.cellType[idx] = TIME_CELL;
+			                                     f.s[idx] = 0.0; // Numbers are solid
+			                                 }
 			                                 scene.timeCellCoords.push([ix, iy]);
 			                             }
 			                         }
@@ -1362,8 +1377,11 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 					var idx = i * n + j;
 
 					               if (f.cellType[idx] === TIME_CELL) {
-					                   f.s[idx] = 0.0; // Time cells are always solid
-					                   continue; // Skip further logic for this cell, preserving its TIME_CELL type
+					                   f.s[idx] = 0.0; // TIME_CELL (numbers) are solid
+					                   continue;
+					               } else if (f.cellType[idx] === VIRTUAL_TIME_CELL) {
+					                   f.s[idx] = 1.0; // VIRTUAL_TIME_CELL (colon) is passable
+					                   continue;
 					               }
 
 					// Check if cell is part of the main circular wall
@@ -1461,8 +1479,10 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 						var idx = i * n + j;
 
 						                  if (f.cellType[idx] === TIME_CELL) {
-						                      f.s[idx] = 0.0; // Keep time cells solid
-						                      // cellType remains TIME_CELL
+						                      f.s[idx] = 0.0; // TIME_CELL (numbers) are solid
+						                      continue;
+						                  } else if (f.cellType[idx] === VIRTUAL_TIME_CELL) {
+						                      f.s[idx] = 1.0; // VIRTUAL_TIME_CELL (colon) is passable
 						                      continue;
 						                  }
 
