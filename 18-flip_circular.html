@@ -781,50 +781,25 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 
 
 			     function initClockDigitsData() {
-			         const masterDigitPatterns = {
-			             '0': [
-			                 [0, 1, 1, 1, 0], [1, 0, 0, 0, 1], [1, 0, 0, 0, 1], [1, 0, 0, 0, 1],
-			                 [1, 0, 0, 0, 1], [1, 0, 0, 0, 1], [0, 1, 1, 1, 0]
-			             ],
-			             '1': [
-			                 [0, 0, 1, 0, 0], [0, 1, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0],
-			                 [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 1, 1, 1, 0]
-			             ],
-			             '2': [
-			                 [0, 1, 1, 1, 0], [1, 0, 0, 0, 1], [0, 0, 0, 0, 1], [0, 0, 1, 1, 0],
-			                 [0, 1, 0, 0, 0], [1, 0, 0, 0, 0], [1, 1, 1, 1, 1]
-			             ],
-			             '3': [
-			                 [0, 1, 1, 1, 0], [1, 0, 0, 0, 1], [0, 0, 0, 1, 1], [0, 0, 1, 1, 0],
-			                 [0, 0, 0, 1, 1], [1, 0, 0, 0, 1], [0, 1, 1, 1, 0]
-			             ],
-			             '4': [
-			                 [1, 0, 0, 0, 1], [1, 0, 0, 0, 1], [1, 0, 0, 0, 1], [0, 1, 1, 1, 1],
-			                 [0, 0, 0, 0, 1], [0, 0, 0, 0, 1], [0, 0, 0, 0, 1]
-			             ],
-			             '5': [
-			                 [1, 1, 1, 1, 1], [1, 0, 0, 0, 0], [1, 1, 1, 1, 0], [0, 0, 0, 0, 1],
-			                 [0, 0, 0, 0, 1], [1, 0, 0, 0, 1], [0, 1, 1, 1, 0]
-			             ],
-			             '6': [
-			                 [0, 1, 1, 1, 0], [1, 0, 0, 0, 0], [1, 0, 0, 0, 0], [1, 1, 1, 1, 0],
-			                 [1, 0, 0, 0, 1], [1, 0, 0, 0, 1], [0, 1, 1, 1, 0]
-			             ],
-			             '7': [
-			                 [1, 1, 1, 1, 1], [0, 0, 0, 0, 1], [0, 0, 0, 1, 0], [0, 0, 1, 0, 0],
-			                 [0, 1, 0, 0, 0], [0, 1, 0, 0, 0], [0, 1, 0, 0, 0]
-			             ],
-			             '8': [
-			                 [0, 1, 1, 1, 0], [1, 0, 0, 0, 1], [1, 0, 0, 0, 1], [0, 1, 1, 1, 0],
-			                 [1, 0, 0, 0, 1], [1, 0, 0, 0, 1], [0, 1, 1, 1, 0]
-			             ],
-			             '9': [
-			                 [0, 1, 1, 1, 0], [1, 0, 0, 0, 1], [1, 0, 0, 0, 1], [0, 1, 1, 1, 1],
-			                 [0, 0, 0, 0, 1], [0, 0, 0, 0, 1], [0, 1, 1, 1, 0]
-			             ],
-			             ':': [ // Master 7x3 for colon
-			                 [0, 0, 0], [0, 1, 0], [0, 1, 0], [0, 0, 0],
-			                 [0, 1, 0], [0, 1, 0], [0, 0, 0]
+			         const masterDigitPatterns = { // Thicker digits and new colon
+			             '0': [[0,1,1,1,0],[1,1,0,1,1],[1,1,0,1,1],[1,1,0,1,1],[1,1,0,1,1],[1,1,0,1,1],[0,1,1,1,0]],
+			             '1': [[0,0,1,1,0],[0,1,1,1,0],[0,0,1,1,0],[0,0,1,1,0],[0,0,1,1,0],[0,0,1,1,0],[0,1,1,1,1]],
+			             '2': [[0,1,1,1,0],[1,1,0,1,1],[0,0,0,1,1],[0,0,1,1,0],[0,1,1,0,0],[1,1,0,0,0],[1,1,1,1,1]],
+			             '3': [[0,1,1,1,0],[1,1,0,1,1],[0,0,0,1,1],[0,0,1,1,1],[0,0,0,1,1],[1,1,0,1,1],[0,1,1,1,0]],
+			             '4': [[1,1,0,1,1],[1,1,0,1,1],[1,1,0,1,1],[1,1,1,1,1],[0,0,0,1,1],[0,0,0,1,1],[0,0,0,1,1]],
+			             '5': [[1,1,1,1,1],[1,1,0,0,0],[1,1,1,1,0],[0,0,0,1,1],[0,0,0,1,1],[1,1,0,1,1],[0,1,1,1,0]],
+			             '6': [[0,1,1,1,0],[1,1,0,0,0],[1,1,0,0,0],[1,1,1,1,0],[1,1,0,1,1],[1,1,0,1,1],[0,1,1,1,0]],
+			             '7': [[1,1,1,1,1],[0,0,0,1,1],[0,0,1,1,0],[0,0,1,1,0],[0,1,1,0,0],[0,1,1,0,0],[0,1,1,0,0]],
+			             '8': [[0,1,1,1,0],[1,1,0,1,1],[1,1,0,1,1],[0,1,1,1,0],[1,1,0,1,1],[1,1,0,1,1],[0,1,1,1,0]],
+			             '9': [[0,1,1,1,0],[1,1,0,1,1],[1,1,0,1,1],[0,1,1,1,1],[0,0,0,1,1],[0,0,0,1,1],[0,1,1,1,0]],
+			             ':': [ // Master 7x4 for colon, with 2x2 dots
+			                 [0,0,0,0],
+			                 [0,1,1,0],
+			                 [0,1,1,0],
+			                 [0,0,0,0],
+			                 [0,1,1,0],
+			                 [0,1,1,0],
+			                 [0,0,0,0]
 			             ]
 			         };
 
@@ -978,17 +953,17 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 			         let circleDiameterInSimUnits = scene.circleRadius * 2;
 			         let circleDiameterInGridCells = Math.floor(circleDiameterInSimUnits / f.h);
 
-			         // 1. Determine Target Character Height (50% of circle's vertical diameter)
-			         let targetCharHeightInGridCells = Math.floor(circleDiameterInGridCells * 0.50);
-			         scene.clockConfig.digitHeight = Math.max(7, targetCharHeightInGridCells); // Min height 7
+			         // 1. Determine Target Character Height (35% of circle's vertical diameter)
+			         let targetCharHeightInGridCells = Math.floor(circleDiameterInGridCells * 0.35);
+			         scene.clockConfig.digitHeight = Math.max(7, targetCharHeightInGridCells); // Min height 7 (master pattern base)
 
 			         // 2. Determine Target Total Width for "HH:MM" (80% of circle's horizontal diameter)
 			         let targetTotalTimeWidthInGridCells = Math.floor(circleDiameterInGridCells * 0.80);
 
-			         // 3. Calculate ideal widths based on new height and aspect ratio
-			         let idealDigitWidth = Math.max(5, Math.floor(scene.clockConfig.digitHeight * 5 / 7));
-			         let idealColonWidth = Math.max(3, Math.floor(idealDigitWidth * 3 / 5));
-			         let idealSpacing = Math.max(1, Math.floor(idealDigitWidth / 5));
+			         // 3. Calculate ideal widths based on new height and master pattern aspect ratios
+			         let idealDigitWidth = Math.max(5, Math.floor(scene.clockConfig.digitHeight * 5 / 7)); // Master digit is 7H x 5W
+			         let idealColonWidth = Math.max(4, Math.floor(scene.clockConfig.digitHeight * 4 / 7)); // Master colon is 7H x 4W
+			         let idealSpacing = Math.max(1, Math.floor(idealDigitWidth / 5)); // Spacing proportional to digit width
 
 			         let currentIdealTotalWidth = (4 * idealDigitWidth) + (1 * idealColonWidth) + (4 * idealSpacing);
 			         
@@ -997,8 +972,8 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 			             widthScaleFactor = targetTotalTimeWidthInGridCells / currentIdealTotalWidth;
 			         }
 
-			         scene.clockConfig.digitWidth = Math.max(5, Math.floor(idealDigitWidth * widthScaleFactor));
-			         scene.clockConfig.colonWidth = Math.max(3, Math.floor(idealColonWidth * widthScaleFactor));
+			         scene.clockConfig.digitWidth = Math.max(5, Math.floor(idealDigitWidth * widthScaleFactor)); // Min master digit width
+			         scene.clockConfig.colonWidth = Math.max(4, Math.floor(idealColonWidth * widthScaleFactor)); // Min master colon width
 			         scene.clockConfig.spacing = Math.max(1, Math.floor(idealSpacing * widthScaleFactor));
 			         // If, after scaling, the total width is still off due to floorings, adjust spacing slightly as a buffer.
 			         // This is a simplified adjustment. A more complex iterative approach could fine-tune all widths.
