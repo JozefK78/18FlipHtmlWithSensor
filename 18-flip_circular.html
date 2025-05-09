@@ -768,9 +768,9 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 			         clockDigitsData: {},
 			         timeCellCoords: [], // Stores [i,j] of current time cells
 			         clockConfig: {
-			             digitWidth: 3,
-			             digitHeight: 5,
-			             colonWidth: 1, // Width for the colon
+			             digitWidth: 5, // Updated
+			             digitHeight: 7, // Updated
+			             colonWidth: 3, // Updated
 			             spacing: 1,    // Spacing between characters
 			             offsetX: 0,    // Calculated based on grid size
 			             offsetY: 0     // Calculated based on grid size
@@ -781,85 +781,86 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 
 
 			     function initClockDigitsData() {
-			         // 3x5 pixel art for digits 0-9, 1 for ON, 0 for OFF
-			         // Each array is a row
-			         scene.clockDigitsData['0'] = [
-			             [1, 1, 1],
-			             [1, 0, 1],
-			             [1, 0, 1],
-			             [1, 0, 1],
-			             [1, 1, 1]
-			         ];
-			         scene.clockDigitsData['1'] = [
-			             [0, 1, 0],
-			             [1, 1, 0],
-			             [0, 1, 0],
-			             [0, 1, 0],
-			             [1, 1, 1]
-			         ];
-			         scene.clockDigitsData['2'] = [
-			             [1, 1, 1],
-			             [0, 0, 1],
-			             [1, 1, 1],
-			             [1, 0, 0],
-			             [1, 1, 1]
-			         ];
-			         scene.clockDigitsData['3'] = [
-			             [1, 1, 1],
-			             [0, 0, 1],
-			             [0, 1, 1],
-			             [0, 0, 1],
-			             [1, 1, 1]
-			         ];
-			         scene.clockDigitsData['4'] = [
-			             [1, 0, 1],
-			             [1, 0, 1],
-			             [1, 1, 1],
-			             [0, 0, 1],
-			             [0, 0, 1]
-			         ];
-			         scene.clockDigitsData['5'] = [
-			             [1, 1, 1],
-			             [1, 0, 0],
-			             [1, 1, 1],
-			             [0, 0, 1],
-			             [1, 1, 1]
-			         ];
-			         scene.clockDigitsData['6'] = [
-			             [1, 1, 1],
-			             [1, 0, 0],
-			             [1, 1, 1],
-			             [1, 0, 1],
-			             [1, 1, 1]
-			         ];
-			         scene.clockDigitsData['7'] = [
-			             [1, 1, 1],
-			             [0, 0, 1],
-			             [0, 1, 0],
-			             [0, 1, 0],
-			             [0, 1, 0]
-			         ];
-			         scene.clockDigitsData['8'] = [
-			             [1, 1, 1],
-			             [1, 0, 1],
-			             [1, 1, 1],
-			             [1, 0, 1],
-			             [1, 1, 1]
-			         ];
-			         scene.clockDigitsData['9'] = [
-			             [1, 1, 1],
-			             [1, 0, 1],
-			             [1, 1, 1],
-			             [0, 0, 1],
-			             [1, 1, 1]
-			         ];
-			         scene.clockDigitsData[':'] = [ // 1x5 for colon
-			             [0],
-			             [1],
-			             [0],
-			             [1],
-			             [0]
-			         ];
+			         const masterDigitPatterns = {
+			             '0': [
+			                 [0, 1, 1, 1, 0], [1, 0, 0, 0, 1], [1, 0, 0, 0, 1], [1, 0, 0, 0, 1],
+			                 [1, 0, 0, 0, 1], [1, 0, 0, 0, 1], [0, 1, 1, 1, 0]
+			             ],
+			             '1': [
+			                 [0, 0, 1, 0, 0], [0, 1, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0],
+			                 [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 1, 1, 1, 0]
+			             ],
+			             '2': [
+			                 [0, 1, 1, 1, 0], [1, 0, 0, 0, 1], [0, 0, 0, 0, 1], [0, 0, 1, 1, 0],
+			                 [0, 1, 0, 0, 0], [1, 0, 0, 0, 0], [1, 1, 1, 1, 1]
+			             ],
+			             '3': [
+			                 [0, 1, 1, 1, 0], [1, 0, 0, 0, 1], [0, 0, 0, 1, 1], [0, 0, 1, 1, 0],
+			                 [0, 0, 0, 1, 1], [1, 0, 0, 0, 1], [0, 1, 1, 1, 0]
+			             ],
+			             '4': [
+			                 [1, 0, 0, 0, 1], [1, 0, 0, 0, 1], [1, 0, 0, 0, 1], [0, 1, 1, 1, 1],
+			                 [0, 0, 0, 0, 1], [0, 0, 0, 0, 1], [0, 0, 0, 0, 1]
+			             ],
+			             '5': [
+			                 [1, 1, 1, 1, 1], [1, 0, 0, 0, 0], [1, 1, 1, 1, 0], [0, 0, 0, 0, 1],
+			                 [0, 0, 0, 0, 1], [1, 0, 0, 0, 1], [0, 1, 1, 1, 0]
+			             ],
+			             '6': [
+			                 [0, 1, 1, 1, 0], [1, 0, 0, 0, 0], [1, 0, 0, 0, 0], [1, 1, 1, 1, 0],
+			                 [1, 0, 0, 0, 1], [1, 0, 0, 0, 1], [0, 1, 1, 1, 0]
+			             ],
+			             '7': [
+			                 [1, 1, 1, 1, 1], [0, 0, 0, 0, 1], [0, 0, 0, 1, 0], [0, 0, 1, 0, 0],
+			                 [0, 1, 0, 0, 0], [0, 1, 0, 0, 0], [0, 1, 0, 0, 0]
+			             ],
+			             '8': [
+			                 [0, 1, 1, 1, 0], [1, 0, 0, 0, 1], [1, 0, 0, 0, 1], [0, 1, 1, 1, 0],
+			                 [1, 0, 0, 0, 1], [1, 0, 0, 0, 1], [0, 1, 1, 1, 0]
+			             ],
+			             '9': [
+			                 [0, 1, 1, 1, 0], [1, 0, 0, 0, 1], [1, 0, 0, 0, 1], [0, 1, 1, 1, 1],
+			                 [0, 0, 0, 0, 1], [0, 0, 0, 0, 1], [0, 1, 1, 1, 0]
+			             ],
+			             ':': [ // Master 7x3 for colon
+			                 [0, 0, 0], [0, 1, 0], [0, 1, 0], [0, 0, 0],
+			                 [0, 1, 0], [0, 1, 0], [0, 0, 0]
+			             ]
+			         };
+
+			         scene.clockDigitsData = {}; // Clear previous data
+
+			         for (const char in masterDigitPatterns) {
+			             const masterPattern = masterDigitPatterns[char];
+			             const masterH = masterPattern.length;
+			             const masterW = masterPattern[0].length;
+
+			             let targetW, targetH;
+			             if (char === ':') {
+			                 targetW = scene.clockConfig.colonWidth;
+			                 targetH = scene.clockConfig.digitHeight; // Colon height matches digit height
+			             } else {
+			                 targetW = scene.clockConfig.digitWidth;
+			                 targetH = scene.clockConfig.digitHeight;
+			             }
+			   
+			             if (targetW === 0 || targetH === 0) { // Avoid division by zero if calculated sizes are too small
+			                 scene.clockDigitsData[char] = [[]]; // Empty pattern
+			                 continue;
+			             }
+
+			             const newPattern = [];
+			             for (let r = 0; r < targetH; r++) {
+			                 const row = [];
+			                 for (let c = 0; c < targetW; c++) {
+			                     const sourceR = Math.min(masterH - 1, Math.floor(r * masterH / targetH));
+			                     const sourceC = Math.min(masterW - 1, Math.floor(c * masterW / targetW));
+			                     row.push(masterPattern[sourceR][sourceC]);
+			                 }
+			                 newPattern.push(row);
+			             }
+			             scene.clockDigitsData[char] = newPattern;
+			         }
 			     }
 
 			     function updateTimeDisplayOnGrid() {
@@ -908,7 +909,7 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 			                 for (var c = 0; c < charWidth; c++) { // Iterate pixel columns (0 to 2 or 0 for colon)
 			                     if (digitPattern[r] && digitPattern[r][c] === 1) {
 			                         var ix = currentGridX + c;
-			                         var iy = baseGridY + r;
+			                         var iy = baseGridY + (scene.clockConfig.digitHeight - 1 - r); // Corrected Y calculation
 
 			                         if (ix >= 0 && ix < f.fNumX && iy >= 0 && iy < f.fNumY) {
 			                             // Check if inside main circle before marking as TIME_CELL
@@ -971,15 +972,33 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 			f = scene.fluid = new FlipFluid(density, tankWidth, tankHeight, h, r, maxParticles);
 			// f.h is now the actual grid spacing used by the fluid sim
 
-			         initClockDigitsData(); // Initialize digit patterns
+			// f.h is now the actual grid spacing used by the fluid sim
+
+			         // Dynamically calculate clock character dimensions
+			         let circleDiameterInSimUnits = scene.circleRadius * 2;
+			         let circleDiameterInGridCells = Math.floor(circleDiameterInSimUnits / f.h); // This is also the vertical diameter in cells
+
+			         // 1. Determine Target Digit Height (e.g., 60% of vertical diameter)
+			         let targetDigitHeight = Math.floor(circleDiameterInGridCells * 0.60);
+			         scene.clockConfig.digitHeight = Math.max(7, targetDigitHeight); // Min height 7 (master pattern height)
+
+			         // 2. Derive Digit Width from Height (maintaining ~5:7 W:H ratio)
+			         scene.clockConfig.digitWidth = Math.max(5, Math.floor(scene.clockConfig.digitHeight * 5 / 7)); // Min width 5 (master pattern width)
+
+			         // 3. Derive Colon Width and Spacing from new Digit Width
+			         scene.clockConfig.colonWidth = Math.max(3, Math.floor(scene.clockConfig.digitWidth * 3 / 5)); // Min colon width 3
+			         scene.clockConfig.spacing = Math.max(1, Math.floor(scene.clockConfig.digitWidth / 5));    // Min spacing 1, proportional
+
+
+			         initClockDigitsData(); // Initialize digit patterns AFTER config is set
 
 			         // Calculate clock position (center it roughly)
-			         var conf = scene.clockConfig;
-			         var totalClockWidthCells = (conf.digitWidth + conf.spacing) * 4 + (conf.colonWidth + conf.spacing) * 1 - conf.spacing; // HH:MM
+			         var conf = scene.clockConfig; // Use the updated conf
+			         var totalClockWidthCells = (conf.digitWidth * 4) + (conf.colonWidth * 1) + (conf.spacing * 4); // HH:MM with 4 inter-char spaces
 			         var totalClockHeightCells = conf.digitHeight;
 			         scene.clockConfig.offsetX = Math.floor(f.fNumX / 2 - totalClockWidthCells / 2);
-			         // Place it slightly above the vertical center
-			         scene.clockConfig.offsetY = Math.floor(f.fNumY / 2 - totalClockHeightCells / 2 - 3); // Move up a bit
+			         // Vertically center the clock on the main circle's horizontal midline
+			         scene.clockConfig.offsetY = Math.floor((scene.circleCenterY / f.h) - (totalClockHeightCells / 2));
 
 
 			// Create particles within the bottom third of the circular container
