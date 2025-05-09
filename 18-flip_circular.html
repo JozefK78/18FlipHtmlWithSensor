@@ -962,7 +962,7 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 
 			         // 3. Calculate ideal widths based on new height and master pattern aspect ratios
 			         let idealDigitWidth = Math.max(5, Math.floor(scene.clockConfig.digitHeight * 5 / 7)); // Master digit is 7H x 5W
-			         let idealColonWidth = Math.max(4, Math.floor(scene.clockConfig.digitHeight * 4 / 7)); // Master colon is 7H x 4W
+			         let idealColonWidth = Math.max(4, Math.floor(scene.clockConfig.digitHeight * 4 / 7)); // Master colon is 7H x 4W (new)
 			         let idealSpacing = Math.max(1, Math.floor(idealDigitWidth / 5)); // Spacing proportional to digit width
 
 			         let currentIdealTotalWidth = (4 * idealDigitWidth) + (1 * idealColonWidth) + (4 * idealSpacing);
@@ -973,7 +973,7 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 			         }
 
 			         scene.clockConfig.digitWidth = Math.max(5, Math.floor(idealDigitWidth * widthScaleFactor)); // Min master digit width
-			         scene.clockConfig.colonWidth = Math.max(4, Math.floor(idealColonWidth * widthScaleFactor)); // Min master colon width
+			         scene.clockConfig.colonWidth = Math.max(4, Math.floor(idealColonWidth * widthScaleFactor)); // Min master colon width (new)
 			         scene.clockConfig.spacing = Math.max(1, Math.floor(idealSpacing * widthScaleFactor));
 			         // If, after scaling, the total width is still off due to floorings, adjust spacing slightly as a buffer.
 			         // This is a simplified adjustment. A more complex iterative approach could fine-tune all widths.
