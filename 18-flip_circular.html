@@ -83,9 +83,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		var FLUID_CELL = 0;
 		var AIR_CELL = 1;
 		var SOLID_CELL = 2;
-
+		var TIME_CELL = 3; // New cell type for clock digits
+		
 		var cnt = 0;
-
+		
 		function clamp(x, min, max) {
 			if (x < min)
 				return min;
@@ -97,6 +98,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 function isCellStaticWall(ix, iy, fluidObj, sceneObj) {
     // Check bounds first: cells outside the defined fNumX/fNumY grid are effectively solid walls
     if (ix < 0 || ix >= fluidObj.fNumX || iy < 0 || iy >= fluidObj.fNumY) return true;
+
+    // Check if it's a time cell
+    var N = fluidObj.fNumY; // Assuming fNumY is accessible as N or fluidObj.fNumY
+    if (fluidObj.cellType[ix * N + iy] === TIME_CELL) return true;
 
     var cellRealX = (ix + 0.5) * fluidObj.h;
     var cellRealY = (iy + 0.5) * fluidObj.h;
@@ -420,8 +425,13 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 					this.u.fill(0.0);
 					this.v.fill(0.0);
 
-					for (var i = 0; i < this.fNumCells; i++)
-						this.cellType[i] = this.s[i] == 0.0 ? SOLID_CELL : AIR_CELL;
+					for (var i = 0; i < this.fNumCells; i++) {
+					                   if (this.cellType[i] == TIME_CELL) { // Preserve TIME_CELL
+					                       this.s[i] = 0.0; // Ensure it's solid for solver
+					                       continue;
+					                   }
+					                   this.cellType[i] = this.s[i] == 0.0 ? SOLID_CELL : AIR_CELL;
+					               }
 
 					for (var i = 0; i < this.numParticles; i++) {
 						var x = this.particlePos[2 * i];
@@ -429,7 +439,7 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 						var xi = clamp(Math.floor(x * h1), 0, this.fNumX - 1);
 						var yi = clamp(Math.floor(y * h1), 0, this.fNumY - 1);
 						var cellNr = xi * n + yi;
-						if (this.cellType[cellNr] == AIR_CELL)
+						if (this.cellType[cellNr] == AIR_CELL) // Only change AIR_CELL to FLUID_CELL
 							this.cellType[cellNr] = FLUID_CELL;
 					}
 				}
@@ -693,6 +703,11 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 						this.cellColor[3 * i + 1] = 0.5;
 						this.cellColor[3 * i + 2] = 0.5;
 					}
+						              else if (this.cellType[i] == TIME_CELL) {
+						                  this.cellColor[3 * i] = 0.9; // Light gray for time cells
+						                  this.cellColor[3 * i + 1] = 0.9;
+						                  this.cellColor[3 * i + 2] = 0.9;
+						              }
 					else if (this.cellType[i] == FLUID_CELL) {
 						var d = this.particleDensity[i];
 						if (this.particleRestDensity > 0.0)
@@ -750,8 +765,172 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 			obstacleVelY: 0.0,
 			showParticles: true,
 			showGrid: false,
+			         clockDigitsData: {},
+			         timeCellCoords: [], // Stores [i,j] of current time cells
+			         clockConfig: {
+			             digitWidth: 3,
+			             digitHeight: 5,
+			             colonWidth: 1, // Width for the colon
+			             spacing: 1,    // Spacing between characters
+			             offsetX: 0,    // Calculated based on grid size
+			             offsetY: 0     // Calculated based on grid size
+			         },
+			         lastMinuteDisplayed: -1,
 			fluid: null
 		};
+
+
+			     function initClockDigitsData() {
+			         // 3x5 pixel art for digits 0-9, 1 for ON, 0 for OFF
+			         // Each array is a row
+			         scene.clockDigitsData['0'] = [
+			             [1, 1, 1],
+			             [1, 0, 1],
+			             [1, 0, 1],
+			             [1, 0, 1],
+			             [1, 1, 1]
+			         ];
+			         scene.clockDigitsData['1'] = [
+			             [0, 1, 0],
+			             [1, 1, 0],
+			             [0, 1, 0],
+			             [0, 1, 0],
+			             [1, 1, 1]
+			         ];
+			         scene.clockDigitsData['2'] = [
+			             [1, 1, 1],
+			             [0, 0, 1],
+			             [1, 1, 1],
+			             [1, 0, 0],
+			             [1, 1, 1]
+			         ];
+			         scene.clockDigitsData['3'] = [
+			             [1, 1, 1],
+			             [0, 0, 1],
+			             [0, 1, 1],
+			             [0, 0, 1],
+			             [1, 1, 1]
+			         ];
+			         scene.clockDigitsData['4'] = [
+			             [1, 0, 1],
+			             [1, 0, 1],
+			             [1, 1, 1],
+			             [0, 0, 1],
+			             [0, 0, 1]
+			         ];
+			         scene.clockDigitsData['5'] = [
+			             [1, 1, 1],
+			             [1, 0, 0],
+			             [1, 1, 1],
+			             [0, 0, 1],
+			             [1, 1, 1]
+			         ];
+			         scene.clockDigitsData['6'] = [
+			             [1, 1, 1],
+			             [1, 0, 0],
+			             [1, 1, 1],
+			             [1, 0, 1],
+			             [1, 1, 1]
+			         ];
+			         scene.clockDigitsData['7'] = [
+			             [1, 1, 1],
+			             [0, 0, 1],
+			             [0, 1, 0],
+			             [0, 1, 0],
+			             [0, 1, 0]
+			         ];
+			         scene.clockDigitsData['8'] = [
+			             [1, 1, 1],
+			             [1, 0, 1],
+			             [1, 1, 1],
+			             [1, 0, 1],
+			             [1, 1, 1]
+			         ];
+			         scene.clockDigitsData['9'] = [
+			             [1, 1, 1],
+			             [1, 0, 1],
+			             [1, 1, 1],
+			             [0, 0, 1],
+			             [1, 1, 1]
+			         ];
+			         scene.clockDigitsData[':'] = [ // 1x5 for colon
+			             [0],
+			             [1],
+			             [0],
+			             [1],
+			             [0]
+			         ];
+			     }
+
+			     function updateTimeDisplayOnGrid() {
+			         if (!scene.fluid) return;
+			         var f = scene.fluid;
+			         var n = f.fNumY;
+
+			         // 1. Clear previous time cells
+			         for (const cell of scene.timeCellCoords) {
+			             var ix = cell[0];
+			             var iy = cell[1];
+			             if (ix >= 0 && ix < f.fNumX && iy >= 0 && iy < f.fNumY) {
+			                 var idx = ix * n + iy;
+			                 // Revert to AIR_CELL, s=1.0. transferVelocities will handle if it becomes FLUID_CELL.
+			                 // Check if it's not part of the main circular boundary first
+			                 var cellRealX = (ix + 0.5) * f.h;
+			                 var cellRealY = (iy + 0.5) * f.h;
+			                 var distSqToMainCenter = (cellRealX - scene.circleCenterX) * (cellRealX - scene.circleCenterX) +
+			                                          (cellRealY - scene.circleCenterY) * (cellRealY - scene.circleCenterY);
+			                 if (distSqToMainCenter <= scene.circleRadius * scene.circleRadius) { // Only clear if inside circle
+			                     f.cellType[idx] = AIR_CELL;
+			                     f.s[idx] = 1.0;
+			                 }
+			             }
+			         }
+			         scene.timeCellCoords = [];
+
+			         // 2. Get current time and format
+			         var now = new Date();
+			         var hours = now.getHours();
+			         var minutes = now.getMinutes();
+			         var timeString = String(hours).padStart(2, '0') + ":" + String(minutes).padStart(2, '0'); // HH:MM
+
+			         // 3. Draw new time
+			         var currentGridX = scene.clockConfig.offsetX;
+			         var baseGridY = scene.clockConfig.offsetY;
+
+			         for (var charIndex = 0; charIndex < timeString.length; charIndex++) {
+			             var char = timeString[charIndex];
+			             var digitPattern = scene.clockDigitsData[char];
+			             if (!digitPattern) continue;
+
+			             var charWidth = (char === ':') ? scene.clockConfig.colonWidth : scene.clockConfig.digitWidth;
+
+			             for (var r = 0; r < scene.clockConfig.digitHeight; r++) { // Iterate pixel rows (0 to 4)
+			                 for (var c = 0; c < charWidth; c++) { // Iterate pixel columns (0 to 2 or 0 for colon)
+			                     if (digitPattern[r] && digitPattern[r][c] === 1) {
+			                         var ix = currentGridX + c;
+			                         var iy = baseGridY + r;
+
+			                         if (ix >= 0 && ix < f.fNumX && iy >= 0 && iy < f.fNumY) {
+			                             // Check if inside main circle before marking as TIME_CELL
+			                             var cellRealX = (ix + 0.5) * f.h;
+			                             var cellRealY = (iy + 0.5) * f.h;
+			                             var distSqToMainCenter = (cellRealX - scene.circleCenterX) * (cellRealX - scene.circleCenterX) +
+			                                                      (cellRealY - scene.circleCenterY) * (cellRealY - scene.circleCenterY);
+
+			                             if (distSqToMainCenter <= (scene.circleRadius - f.h) * (scene.circleRadius - f.h)) { // Ensure slightly inside
+			                                 var idx = ix * n + iy;
+			                                 f.cellType[idx] = TIME_CELL;
+			                                 f.s[idx] = 0.0; // Solid
+			                                 scene.timeCellCoords.push([ix, iy]);
+			                             }
+			                         }
+			                     }
+			                 }
+			             }
+			             currentGridX += charWidth + scene.clockConfig.spacing;
+			         }
+			     }
+
 		// File: 18-flip-circle.html
 
 		function setupScene() {
@@ -791,6 +970,17 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 			// Create fluid
 			f = scene.fluid = new FlipFluid(density, tankWidth, tankHeight, h, r, maxParticles);
 			// f.h is now the actual grid spacing used by the fluid sim
+
+			         initClockDigitsData(); // Initialize digit patterns
+
+			         // Calculate clock position (center it roughly)
+			         var conf = scene.clockConfig;
+			         var totalClockWidthCells = (conf.digitWidth + conf.spacing) * 4 + (conf.colonWidth + conf.spacing) * 1 - conf.spacing; // HH:MM
+			         var totalClockHeightCells = conf.digitHeight;
+			         scene.clockConfig.offsetX = Math.floor(f.fNumX / 2 - totalClockWidthCells / 2);
+			         // Place it slightly above the vertical center
+			         scene.clockConfig.offsetY = Math.floor(f.fNumY / 2 - totalClockHeightCells / 2 - 3); // Move up a bit
+
 
 			// Create particles within the bottom third of the circular container
 			f.numParticles = 0;
@@ -850,6 +1040,7 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 					}
 				}
 			}
+						      updateTimeDisplayOnGrid(); // Initial time display
 
 			// Set initial draggable obstacle position (e.g., center of the circle)
 			// Pass true for reset, so its velocity is initially zero.
@@ -1156,19 +1347,23 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 					var cellRealY = (j + 0.5) * f.h;
 					var idx = i * n + j;
 
+					               if (f.cellType[idx] === TIME_CELL) {
+					                   f.s[idx] = 0.0; // Time cells are always solid
+					                   continue; // Skip further logic for this cell, preserving its TIME_CELL type
+					               }
+
 					// Check if cell is part of the main circular wall
 					var distSqToMainCenter = (cellRealX - mainCircleX) * (cellRealX - mainCircleX) +
 						(cellRealY - mainCircleY) * (cellRealY - mainCircleY);
 
 					if (distSqToMainCenter > mainCircleR2) {
 						f.s[idx] = 0.0; // Solid (part of main circular wall)
-						// Velocities for static main wall cells should ideally be zero
-						// and handled by the solver's boundary conditions based on s=0.
-						// The "restore solid cell velocities" step in transferVelocities handles this.
+					                   // cellType will be set to SOLID_CELL by transferVelocities if not already TIME_CELL
 					} else {
 						// Cell is INSIDE the main circular boundary.
 						// Default to fluid/air unless it's part of the draggable obstacle.
 						f.s[idx] = 1.0;
+					                   // cellType will be set to AIR_CELL (then maybe FLUID_CELL) by transferVelocities
 
 						if (scene.showObstacle) { // Check if draggable obstacle is active
 							var dxDraggable = cellRealX - x; // x,y are draggable obstacle's current center
@@ -1176,6 +1371,7 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 
 							if (dxDraggable * dxDraggable + dyDraggable * dyDraggable < rObstacle2) {
 								f.s[idx] = 0.0; // Mark as part of draggable obstacle
+					                           // cellType will be set to SOLID_CELL by transferVelocities
 
 								// Stamp draggable obstacle velocity onto grid cells it occupies
 								// u-velocity at left face of cell (i,j) is u[i*n+j]
@@ -1250,13 +1446,21 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 						var cellRealY = (j + 0.5) * f.h;
 						var idx = i * n + j;
 
+						                  if (f.cellType[idx] === TIME_CELL) {
+						                      f.s[idx] = 0.0; // Keep time cells solid
+						                      // cellType remains TIME_CELL
+						                      continue;
+						                  }
+
 						var distSqToMainCenter = (cellRealX - mainCircleX) * (cellRealX - mainCircleX) +
 							(cellRealY - mainCircleY) * (cellRealY - mainCircleY);
 
 						if (distSqToMainCenter > mainCircleR2) {
 							f.s[idx] = 0.0; // Solid (part of main circular wall)
+						                      // transferVelocities will set cellType to SOLID_CELL
 						} else {
 							f.s[idx] = 1.0; // Fluid/Air (inside main circle)
+						                      // transferVelocities will set cellType to AIR_CELL (or FLUID_CELL)
 						}
 						// Velocities for grid cells that become fluid don't need explicit reset here;
 						// they will be determined by particle transfer or solver.
@@ -1422,12 +1626,23 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 		}
 
 		function update() {
+		          var now = new Date();
+		          var currentMinute = now.getMinutes();
+		          var currentSecond = now.getSeconds();
+
+		          if (scene.fluid && currentMinute !== scene.lastMinuteDisplayed && currentSecond === 0) {
+		               // console.log("Updating time display: " + now.toLocaleTimeString());
+		              updateTimeDisplayOnGrid();
+		              scene.lastMinuteDisplayed = currentMinute;
+		          }
+
 			simulate();
 			draw();
 			requestAnimationFrame(update);
 		}
 
 		setupScene();
+		      scene.lastMinuteDisplayed = new Date().getMinutes(); // Initialize for first update check
 		update(); // Start the animation loop
 
 	</script>
