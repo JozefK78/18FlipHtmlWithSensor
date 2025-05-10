@@ -449,8 +449,9 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 						var xi = clamp(Math.floor(x * h1), 0, this.fNumX - 1);
 						var yi = clamp(Math.floor(y * h1), 0, this.fNumY - 1);
 						var cellNr = xi * n + yi;
-						// Only change AIR_CELL to FLUID_CELL. TIME_CELL and VIRTUAL_TIME_CELL should retain their type.
-						if (this.cellType[cellNr] == AIR_CELL)
+						// Change AIR_CELL or VIRTUAL_TIME_CELL to FLUID_CELL if particles are present.
+						// TIME_CELL remains solid and retains its type. Other SOLID_CELLs also retain their type.
+						if (this.cellType[cellNr] == AIR_CELL || this.cellType[cellNr] == VIRTUAL_TIME_CELL)
 							this.cellType[cellNr] = FLUID_CELL;
 					}
 				}
@@ -726,6 +727,22 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 						if (this.particleRestDensity > 0.0)
 							d /= this.particleRestDensity;
 						this.setSciColor(i, d, 0.0, 2.0);
+					}
+				}
+				
+				// Ensure cells designated as part of the clock display are always white
+				if (scene && scene.timeCellCoords && scene.fluid) {
+					var f = scene.fluid;
+					var n = f.fNumY;
+					for (const cellCoord of scene.timeCellCoords) {
+						var ix = cellCoord[0];
+						var iy = cellCoord[1];
+						if (ix >= 0 && ix < f.fNumX && iy >= 0 && iy < f.fNumY) {
+							var cellNr = ix * n + iy;
+							this.cellColor[3 * cellNr] = 1.0;
+							this.cellColor[3 * cellNr + 1] = 1.0;
+							this.cellColor[3 * cellNr + 2] = 1.0;
+						}
 					}
 				}
 			}
