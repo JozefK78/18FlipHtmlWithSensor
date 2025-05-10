@@ -63,7 +63,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 	<input type="range" min="0" max="10" value="9" class="slider" onchange="scene.flipRatio = 0.1 * this.value"> FLIP
 	<br>
 	Grid Resolution:
-	<input type="range" min="50" max="200" value="100" step="10" class="slider" id="gridResSlider" onchange="updateGridResolution(this.value)"> <span id="gridResValue">100</span>
+	<input type="range" min="50" max="200" value="150" step="10" class="slider" id="gridResSlider" onchange="updateGridResolution(this.value)"> <span id="gridResValue">150</span>
 	<br>
 	<canvas id="myCanvas" style="border:2px solid"></canvas>
 
@@ -717,9 +717,9 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 						this.cellColor[3 * i + 2] = 0.5;
 					}
 						              else if (this.cellType[i] == TIME_CELL || this.cellType[i] == VIRTUAL_TIME_CELL) {
-						                  this.cellColor[3 * i] = 0.9; // Light gray for time and virtual time cells
-						                  this.cellColor[3 * i + 1] = 0.9;
-						                  this.cellColor[3 * i + 2] = 0.9;
+						                  this.cellColor[3 * i] = 1.0; // White for time and virtual time cells
+						                  this.cellColor[3 * i + 1] = 1.0;
+						                  this.cellColor[3 * i + 2] = 1.0;
 						              }
 					else if (this.cellType[i] == FLUID_CELL) {
 						var d = this.particleDensity[i];
@@ -789,7 +789,7 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 			             offsetY: 0     // Calculated based on grid size
 			         },
 			         lastMinuteDisplayed: -1,
-			currentRes: 100, // Default grid resolution
+			currentRes: 150, // Default grid resolution
 			fluid: null
 		};
 
@@ -909,13 +909,9 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 
 			                             if (distSqToMainCenter <= (scene.circleRadius - f.h) * (scene.circleRadius - f.h)) { // Ensure slightly inside
 			                                 var idx = ix * n + iy;
-			                                 if (char === ':') {
-			                                     f.cellType[idx] = VIRTUAL_TIME_CELL;
-			                                     f.s[idx] = 1.0; // Colon is passable
-			                                 } else {
-			                                     f.cellType[idx] = TIME_CELL;
-			                                     f.s[idx] = 0.0; // Numbers are solid
-			                                 }
+			                                 // All clock characters are VIRTUAL_TIME_CELL and passable
+			                                 f.cellType[idx] = VIRTUAL_TIME_CELL;
+			                                 f.s[idx] = 1.0;
 			                                 scene.timeCellCoords.push([ix, iy]);
 			                             }
 			                         }

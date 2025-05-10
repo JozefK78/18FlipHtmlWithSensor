@@ -63,7 +63,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 	<input type="range" min="0" max="10" value="9" class="slider" onchange="scene.flipRatio = 0.1 * this.value"> FLIP
 	<br>
 	Grid Resolution:
-	<input type="range" min="50" max="200" value="100" step="10" class="slider" id="gridResSlider" onchange="updateGridResolution(this.value)"> <span id="gridResValue">100</span>
+	<input type="range" min="50" max="200" value="150" step="10" class="slider" id="gridResSlider" onchange="updateGridResolution(this.value)"> <span id="gridResValue">150</span>
 	<br>
 	<canvas id="myCanvas" style="border:2px solid"></canvas>
 
@@ -789,7 +789,7 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 			             offsetY: 0     // Calculated based on grid size
 			         },
 			         lastMinuteDisplayed: -1,
-			currentRes: 100, // Default grid resolution
+			currentRes: 150, // Default grid resolution
 			fluid: null
 		};
 
