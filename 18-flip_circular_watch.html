@@ -66,13 +66,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 	<input type="range" min="50" max="200" value="150" step="10" class="slider" id="gridResSlider" onchange="updateGridResolution(this.value)"> <span id="gridResValue">150</span>
 	<br>
 	Particle Count:
-	<input type="range" min="0" max="16" value="11" class="slider" id="particleCountSlider" style="width: 80px;" oninput="updateParticleCountUI(this.value)" onchange="handleParticleCountChange(this.value)"> <span id="particleCountValue">1700</span>
+	<input type="range" min="0" max="18" value="11" class="slider" id="particleCountSlider" style="width: 80px;" oninput="updateParticleCountUI(this.value)" onchange="handleParticleCountChange(this.value)"> <span id="particleCountValue">1700</span>
 	<br>
 	<canvas id="myCanvas" style="border:2px solid"></canvas>
 
 	<script>
 		// Particle slider steps definition
-		var particleSliderSteps = [100, 200, 500, 1000, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 7500, 10000, 12500, 15000, 17500, 20000];
+		var particleSliderSteps = [100, 200, 500, 1000, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 7500, 10000, 12500, 15000, 17500, 20000, 25000, 30000];
 		var defaultParticleCountIndex = particleSliderSteps.indexOf(5000);
 
 		var canvas = document.getElementById("myCanvas");
@@ -1015,7 +1015,7 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 			var dy = Math.sqrt(3.0) / 2.0 * dx; // Vertical spacing for staggered particles
 
 			// Max particles for the simulation arrays should be the max of the slider
-			var maxSimParticles = 20000;
+			var maxSimParticles = 30000;
 
 			// Create fluid
 			f = scene.fluid = new FlipFluid(density, tankWidth, tankHeight, h, r, maxSimParticles);
