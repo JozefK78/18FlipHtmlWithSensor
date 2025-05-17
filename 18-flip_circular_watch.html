@@ -65,9 +65,15 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 	Grid Resolution:
 	<input type="range" min="50" max="200" value="150" step="10" class="slider" id="gridResSlider" onchange="updateGridResolution(this.value)"> <span id="gridResValue">150</span>
 	<br>
+	Particle Count:
+	<input type="range" min="0" max="21" value="11" class="slider" id="particleCountSlider" style="width: 80px;" oninput="updateParticleCountUI(this.value)" onchange="handleParticleCountChange(this.value)"> <span id="particleCountValue">1700</span>
+	<br>
 	<canvas id="myCanvas" style="border:2px solid"></canvas>
 
 	<script>
+		// Particle slider steps definition
+		var particleSliderSteps = [100, 200, 300, 400, 500, 600, 700, 800, 1000, 1200, 1400, 1700, 2000, 2400, 2900, 3500, 4200, 5000, 6000, 7200, 8600, 10000];
+		var defaultParticleCountIndex = particleSliderSteps.indexOf(1700); // Should be 11, results in 1700
 
 		var canvas = document.getElementById("myCanvas");
 		var gl = canvas.getContext("webgl");
@@ -807,6 +813,7 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 			         },
 			         lastMinuteDisplayed: -1,
 			currentRes: 150, // Default grid resolution
+			targetParticleCount: particleSliderSteps[defaultParticleCountIndex], // Default particle count
 			fluid: null
 		};
 
@@ -941,6 +948,18 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 
 		// File: 18-flip-circle.html
 
+		function updateParticleCountUI(sliderIndex) {
+			   let actualCount = particleSliderSteps[parseInt(sliderIndex)];
+			   document.getElementById('particleCountValue').textContent = actualCount;
+		}
+
+		function handleParticleCountChange(sliderIndex) {
+			   scene.targetParticleCount = particleSliderSteps[parseInt(sliderIndex)];
+			   document.getElementById('particleCountValue').textContent = scene.targetParticleCount; // Ensure UI updates on change
+			   restartSimulation();
+		}
+
+
 		function setupScene() {
 			scene.obstacleRadius = 0.15; // This is for the draggable obstacle
 			scene.overRelaxation = 1.9;
@@ -956,10 +975,34 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 			var density = 1000.0;
 
 			// Define circular container properties
-			var circleCenterX = tankWidth / 2.0;
-			var circleCenterY = tankHeight / 2.0;
-			// Radius is 40% of min dimension (diameter is 80%)
-			var circleRadius = 0.4 * Math.min(tankWidth, tankHeight);
+			var circleRadius = 0.4 * Math.min(tankWidth, tankHeight); // Radius based on 40% of the smaller dimension
+			var circleCenterX, circleCenterY;
+
+			if (tankWidth >= tankHeight) { // Landscape or square
+			 // Center Y is straightforward.
+			 circleCenterY = tankHeight / 2.0;
+			 // For X, if it's landscape, we want the circle to be centered in a conceptual square
+			 // that is tankHeight wide, positioned in the middle of the tankWidth.
+			 // The padding on each side of this conceptual square is (tankWidth - tankHeight) / 2.0.
+			 // The center of this conceptual square is then this padding + tankHeight / 2.0.
+			 var sidePadding = (tankWidth - tankHeight) / 2.0;
+			 circleCenterX = sidePadding + (tankHeight / 2.0);
+			} else { // Portrait (tankHeight > tankWidth)
+			 // Center X is straightforward.
+			 circleCenterX = tankWidth / 2.0;
+			 // For Y, if it's portrait, we want the circle to be centered in a conceptual square
+			 // that is tankWidth tall, positioned in the middle of the tankHeight.
+			 // The padding on top/bottom of this conceptual square is (tankHeight - tankWidth) / 2.0.
+			 // The center of this conceptual square (from the top of sim area) is this padding + tankWidth / 2.0.
+			 var topPadding = (tankHeight - tankWidth) / 2.0;
+			 circleCenterY = topPadding + (tankWidth / 2.0);
+			}
+			
+			// Safeguard: Ensure the circle (defined by its center and radius) doesn't go off-screen.
+			// This is important if the radius is very large relative to the smaller dimension.
+			circleCenterX = Math.max(circleRadius, Math.min(tankWidth - circleRadius, circleCenterX));
+			circleCenterY = Math.max(circleRadius, Math.min(tankHeight - circleRadius, circleCenterY));
+
 
 			// Store main circle parameters in the scene object for global access
 			scene.circleCenterX = circleCenterX;
@@ -971,14 +1014,11 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 			var dx = 2.0 * r;   // Horizontal spacing for staggered particles
 			var dy = Math.sqrt(3.0) / 2.0 * dx; // Vertical spacing for staggered particles
 
-			var estNumX_circle = Math.floor((2 * circleRadius) / dx);
-			var estNumY_circle = Math.floor((2 * circleRadius) / dy);
-			var maxParticles = Math.max(1000, estNumX_circle * estNumY_circle * 2); // More generous maxParticles
+			// Max particles for the simulation arrays should be the max of the slider
+			var maxSimParticles = 10000;
 
 			// Create fluid
-			f = scene.fluid = new FlipFluid(density, tankWidth, tankHeight, h, r, maxParticles);
-			// f.h is now the actual grid spacing used by the fluid sim
-
+			f = scene.fluid = new FlipFluid(density, tankWidth, tankHeight, h, r, maxSimParticles);
 			// f.h is now the actual grid spacing used by the fluid sim
 
 			         // Dynamically calculate clock character dimensions
@@ -1034,30 +1074,34 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 
 			// Define the fill region for particles (bottom 1/3 of the circle's height)
 			// Particles placed slightly away from the absolute bottom edge
-			var fillMinY = circleCenterY - circleRadius + f.particleRadius * 2.0;
-			var fillMaxY = circleCenterY - (0.2 * circleRadius) - f.particleRadius * 2.0; // Fill 40% from bottom
+			var fillMinY = scene.circleCenterY - scene.circleRadius + f.particleRadius * 2.0;
+			var fillMaxY = scene.circleCenterY - (0.2 * scene.circleRadius) - f.particleRadius * 2.0;
 
 			var particleCount = 0;
-			for (var yCand = fillMinY; yCand < fillMaxY && particleCount < f.maxParticles; yCand += dy) {
+			// Use scene.targetParticleCount from the slider, but don't exceed maxSimParticles (array capacity)
+			var numParticlesToCreate = Math.min(scene.targetParticleCount, maxSimParticles);
+
+			for (var yCand = fillMinY; yCand < fillMaxY && particleCount < numParticlesToCreate; yCand += dy) {
 				var isOddRow = (Math.floor((yCand - fillMinY) / dy) % 2) == 1;
 				// Calculate available width at this yCand within the circle
 				var halfWidthAtY = 0;
-				var dyFromCenter = Math.abs(yCand - circleCenterY);
-				if (dyFromCenter < circleRadius) {
-					halfWidthAtY = Math.sqrt(circleRadius * circleRadius - dyFromCenter * dyFromCenter);
+				var dyFromCenter = Math.abs(yCand - scene.circleCenterY);
+				if (dyFromCenter < scene.circleRadius) {
+					halfWidthAtY = Math.sqrt(scene.circleRadius * scene.circleRadius - dyFromCenter * dyFromCenter);
 				}
 
-				var startX = circleCenterX - halfWidthAtY + f.particleRadius * 2.0 + (isOddRow ? f.particleRadius : 0.0);
-				var endX = circleCenterX + halfWidthAtY - f.particleRadius * 2.0;
+				var startX = scene.circleCenterX - halfWidthAtY + f.particleRadius * 2.0 + (isOddRow ? f.particleRadius : 0.0);
+				var endX = scene.circleCenterX + halfWidthAtY - f.particleRadius * 2.0;
 
-				for (var xCand = startX; xCand < endX && particleCount < f.maxParticles; xCand += dx) {
-					// Double check particle center is within the circle (it should be by construction of startX/endX)
-					var distSq = (xCand - circleCenterX) * (xCand - circleCenterX) +
-						(yCand - circleCenterY) * (yCand - circleCenterY);
+				for (var xCand = startX; xCand < endX && particleCount < numParticlesToCreate; xCand += dx) {
+					// Double check particle center is within the circle
+					var distSq = (xCand - scene.circleCenterX) * (xCand - scene.circleCenterX) +
+						(yCand - scene.circleCenterY) * (yCand - scene.circleCenterY);
 
 					// Ensure particle is a bit away from the boundary
-					if (distSq < (circleRadius - f.particleRadius * 1.5) * (circleRadius - f.particleRadius * 1.5)) {
-						if (p_idx < 2 * f.maxParticles) {
+					if (distSq < (scene.circleRadius - f.particleRadius * 1.5) * (scene.circleRadius - f.particleRadius * 1.5)) {
+						// p_idx refers to the particlePos array which has size 2 * maxSimParticles
+						if (p_idx < 2 * maxSimParticles) {
 							f.particlePos[p_idx++] = xCand;
 							f.particlePos[p_idx++] = yCand;
 							particleCount++;
@@ -1065,7 +1109,7 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 					}
 				}
 			}
-			f.numParticles = particleCount;
+			f.numParticles = particleCount; // Actual number of particles created
 
 			// Setup grid cells (s array) for the circular tank
 			var n = f.fNumY;
@@ -1694,6 +1738,11 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 
 		setupScene();
 		      scene.lastMinuteDisplayed = new Date().getMinutes(); // Initialize for first update check
+		      // Initialize particle count UI on load
+		      if (document.getElementById('particleCountSlider')) { // Check if element exists
+		        document.getElementById('particleCountSlider').value = defaultParticleCountIndex;
+		        updateParticleCountUI(defaultParticleCountIndex);
+		      }
 		
 		function updateGridResolution(newResString) {
 		    scene.currentRes = parseInt(newResString);
@@ -1722,7 +1771,21 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 		    if (scene.fluid && scene.fluid.cellColor) scene.fluid.cellColor = new Float32Array(0);
 
 
-		    setupScene(); // This will use scene.currentRes and re-create scene.fluid
+		    setupScene(); // This will use scene.currentRes and scene.targetParticleCount, and re-create scene.fluid
+		    // Update UI elements that might have been reset or need to reflect new state
+		    if (document.getElementById('gridResValue')) {
+		        document.getElementById('gridResValue').textContent = scene.currentRes;
+		    }
+		    // Find the index for the current targetParticleCount to set the slider position correctly
+		    let currentParticleSliderIndex = particleSliderSteps.indexOf(scene.targetParticleCount);
+		    if (currentParticleSliderIndex === -1) { // Fallback if not found
+		        currentParticleSliderIndex = defaultParticleCountIndex;
+		        scene.targetParticleCount = particleSliderSteps[defaultParticleCountIndex]; // Reset scene value too
+		    }
+		    if (document.getElementById('particleCountSlider')) {
+		        document.getElementById('particleCountSlider').value = currentParticleSliderIndex;
+		        updateParticleCountUI(currentParticleSliderIndex);
+		    }
 		    // updateTimeDisplayOnGrid(); // setupScene calls this
 		    // draw(); // update loop will handle drawing
 		}
