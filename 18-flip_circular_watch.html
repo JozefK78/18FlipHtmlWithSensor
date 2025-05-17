@@ -72,13 +72,13 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 	<script>
 		// Particle slider steps definition
-		var particleSliderSteps = [100, 200, 300, 400, 500, 600, 700, 800, 1000, 1200, 1400, 1700, 2000, 2400, 2900, 3500, 4200, 5000, 6000, 7200, 8600, 10000];
-		var defaultParticleCountIndex = particleSliderSteps.indexOf(1700); // Should be 11, results in 1700
+		var particleSliderSteps = [100, 200, 500, 1000, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 7500, 10000, 12500, 15000, 17500, 20000];
+		var defaultParticleCountIndex = particleSliderSteps.indexOf(5000);
 
 		var canvas = document.getElementById("myCanvas");
 		var gl = canvas.getContext("webgl");
 		canvas.width = window.innerWidth - 20;
-		canvas.height = window.innerHeight - 20;
+		canvas.height = window.innerHeight - 200;
 
 		canvas.focus();
 
@@ -975,7 +975,7 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 			var density = 1000.0;
 
 			// Define circular container properties
-			var circleRadius = 0.4 * Math.min(tankWidth, tankHeight); // Radius based on 40% of the smaller dimension
+			var circleRadius = 0.45 * Math.min(tankWidth, tankHeight); // Radius based on 40% of the smaller dimension
 			var circleCenterX, circleCenterY;
 
 			if (tankWidth >= tankHeight) { // Landscape or square
@@ -1015,7 +1015,7 @@ function isCellDraggable(ix, iy, fluidObj, sceneObj) {
 			var dy = Math.sqrt(3.0) / 2.0 * dx; // Vertical spacing for staggered particles
 
 			// Max particles for the simulation arrays should be the max of the slider
-			var maxSimParticles = 10000;
+			var maxSimParticles = 20000;
 
 			// Create fluid
 			f = scene.fluid = new FlipFluid(density, tankWidth, tankHeight, h, r, maxSimParticles);
